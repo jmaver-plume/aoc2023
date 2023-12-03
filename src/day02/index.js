@@ -2,77 +2,81 @@ import run from "aocrunner"
 
 const parseInput = (rawInput) => rawInput
 
-const parseGame = (line) => {
-  const [left, right] = line.split(":")
-  const gameNumber = left.match(/Game (\d+)/)[1]
-  return {
-    id: gameNumber,
-    rounds: right.split(";").map((round) => {
-      return round.split(",").reduce((acc, cube) => {
-        const [count, color] = cube.trim().split(" ")
-        acc[color] = parseInt(count)
-        return acc
-      }, {})
-    }),
-  }
+function Round(round) {
+  this.red = round.red
+  this.blue = round.blue
+  this.green = round.green
 }
 
-const isValidRound = (round) => {
-  return (
-    (round.red === undefined || round.red <= 12) &&
-    (round.green === undefined || round.green <= 13) &&
-    (round.blue === undefined || round.blue <= 14)
+Round.create = function (rawRound) {
+  const round = rawRound.split(",").reduce(
+    (acc, cube) => {
+      const [count, color] = cube.trim().split(" ")
+      acc[color] = parseInt(count)
+      return acc
+    },
+    { blue: 0, green: 0, red: 0 },
+  )
+
+  return new Round(round)
+}
+
+Round.prototype.isValid = function () {
+  return this.red <= 12 && this.green <= 13 && this.blue <= 14
+}
+
+function Game(id, rounds) {
+  this.id = parseInt(id)
+  this.rounds = rounds
+}
+
+Game.create = function (rawGame) {
+  const [left, right] = rawGame.split(":")
+  const id = left.match(/Game (\d+)/)[1]
+  const rawRounds = right.split(";")
+  const rounds = rawRounds.map((rawRound) => Round.create(rawRound))
+  return new Game(id, rounds)
+}
+
+Game.prototype.isValid = function () {
+  return this.rounds.every((round) => round.isValid())
+}
+
+Game.prototype.getMinimumColorCountsForValidGameForColor = function (color) {
+  return this.rounds.reduce(
+    (max, round) => (round[color] > max ? round[color] : max),
+    0,
   )
 }
 
-const isValidGame = (game) => {
-  return game.rounds.every((round) => isValidRound(round))
+Game.prototype.getMinimumColorCountsForValidGame = function () {
+  return {
+    green: this.getMinimumColorCountsForValidGameForColor("green"),
+    blue: this.getMinimumColorCountsForValidGameForColor("blue"),
+    red: this.getMinimumColorCountsForValidGameForColor("red"),
+  }
 }
-
-const sum = (numbers) => numbers.reduce((sum, number) => number + sum, 0)
 
 const part1 = (rawInput) => {
   const input = parseInput(rawInput)
   const lines = input.split("\n")
-  const games = lines.map((line) => parseGame(line))
-  const possibleGames = games.filter((game) => isValidGame(game))
-  const possibleGameIds = possibleGames.map((game) => parseInt(game.id))
-  return sum(possibleGameIds)
-}
-
-const getMaxColorInGame = (game, color) => {
-  let max = 0
-  game.rounds.forEach((round) => {
-    if (round[color] && round[color] > max) {
-      max = round[color]
-    }
-  })
-  return max
+  const games = lines.map((line) => Game.create(line))
+  const possibleGames = games.filter((game) => game.isValid())
+  const possibleGameIds = possibleGames.map((game) => game.id)
+  return possibleGameIds.reduce((acc, id) => acc + id, 0)
 }
 
 const part2 = (rawInput) => {
   const input = parseInput(rawInput)
   const lines = input.split("\n")
-  const games = lines.map((line) => parseGame(line))
-
-  const gameColorMetrics = games.map((game) => {
-    const blueMax = getMaxColorInGame(game, "blue")
-    const redMax = getMaxColorInGame(game, "red")
-    const greenMax = getMaxColorInGame(game, "green")
-
-    return {
-      id: game.id,
-      blue: blueMax,
-      red: redMax,
-      green: greenMax,
-    }
-  })
-
-  const colorProductScores = gameColorMetrics.map(
-    (game) => game.blue * game.red * game.green,
+  const games = lines.map((line) => Game.create(line))
+  const gameColorMetrics = games.map((game) =>
+    game.getMinimumColorCountsForValidGame(),
   )
 
-  return sum(colorProductScores)
+  return gameColorMetrics
+    .map((game) => game.blue * game.red * game.green)
+    .reduce((acc, product) => acc + product, 0)
 }
 
 run({
