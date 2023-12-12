@@ -325,22 +325,22 @@ const part2 = (rawInput) => {
 run({
   part1: {
     tests: [
-      //       {
-      //         input: `-L|F7
-      // 7S-7|
-      // L|7||
-      // -L-J|
-      // L|-JF`,
-      //         expected: 4,
-      //       },
-      //       {
-      //         input: `7-F7-
-      // .FJ|7
-      // SJLL7
-      // |F--J
-      // LJ.LJ`,
-      //         expected: 8,
-      //       },
+      {
+        input: `-L|F7
+7S-7|
+L|7||
+-L-J|
+L|-JF`,
+        expected: 4,
+      },
+      {
+        input: `7-F7-
+.FJ|7
+SJLL7
+|F--J
+LJ.LJ`,
+        expected: 8,
+      },
     ],
     solution: part1,
   },
