@@ -25,44 +25,44 @@
 
 export const getNextPositions = (grid, position, includeDiagonals = false) => {
   const nextPositions = []
-  const { row, col } = position
+  const { row, column } = position
   const maxRow = grid.length
   const maxCol = grid[0].length
 
   // Up
   if (row > 0) {
-    nextPositions.push({ row: row - 1, col })
+    nextPositions.push({ row: row - 1, column: column })
   }
   // Down
   if (row < maxRow - 1) {
-    nextPositions.push({ row: row + 1, col })
+    nextPositions.push({ row: row + 1, column: column })
   }
   // Left
-  if (col > 0) {
-    nextPositions.push({ row, col: col - 1 })
+  if (column > 0) {
+    nextPositions.push({ row, column: column - 1 })
   }
   // Right
-  if (col < maxCol - 1) {
-    nextPositions.push({ row, col: col + 1 })
+  if (column < maxCol - 1) {
+    nextPositions.push({ row, column: column + 1 })
   }
 
   // Diagonals
   if (includeDiagonals) {
     // Upper Left
-    if (row > 0 && col > 0) {
-      nextPositions.push({ row: row - 1, col: col - 1 })
+    if (row > 0 && column > 0) {
+      nextPositions.push({ row: row - 1, column: column - 1 })
     }
     // Upper Right
-    if (row > 0 && col < maxCol - 1) {
-      nextPositions.push({ row: row - 1, col: col + 1 })
+    if (row > 0 && column < maxCol - 1) {
+      nextPositions.push({ row: row - 1, column: column + 1 })
     }
     // Lower Left
-    if (row < maxRow - 1 && col > 0) {
-      nextPositions.push({ row: row + 1, col: col - 1 })
+    if (row < maxRow - 1 && column > 0) {
+      nextPositions.push({ row: row + 1, column: column - 1 })
     }
     // Lower Right
-    if (row < maxRow - 1 && col < maxCol - 1) {
-      nextPositions.push({ row: row + 1, col: col + 1 })
+    if (row < maxRow - 1 && column < maxCol - 1) {
+      nextPositions.push({ row: row + 1, column: column + 1 })
     }
   }
 
