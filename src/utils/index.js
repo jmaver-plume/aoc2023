@@ -83,3 +83,28 @@ export const logGrid = (grid) => {
 
 export const parseGrid = (input) =>
   input.split("\n").map((line) => line.split(""))
+
+export const mermaid = (graph) => {
+  const edges = _.entries(graph).flatMap(([key, neighbours]) =>
+    neighbours.map((neighbour) => `    ${key} --> ${neighbour}`),
+  )
+  return "graph\n" + edges.join("\n")
+}
+
+export const createGraphFromPaths = (paths) => {
+  const graph = { A: new Set() }
+  paths.forEach((path) => {
+    for (let i = 0; i < path.length - 1; i++) {
+      if (path[i] in graph) {
+        graph[path[i]].add(path[i + 1])
+      } else {
+        graph[path[i]] = new Set([path[i + 1]])
+      }
+    }
+  })
+  return _.fromPairs(
+    _.entries(graph).map((entry) => {
+      return [entry[0], Array.from(entry[1])]
+    }),
+  )
+}
