@@ -22,6 +22,7 @@
  *     import myLib from '../utils/myLib'
  *     import { myUtil } from '../utils'
  */
+import _ from "lodash"
 
 export const getNextPositions = (grid, position, includeDiagonals = false) => {
   const nextPositions = []
@@ -84,11 +85,21 @@ export const logGrid = (grid) => {
 export const parseGrid = (input) =>
   input.split("\n").map((line) => line.split(""))
 
-export const mermaid = (graph) => {
-  const edges = _.entries(graph).flatMap(([key, neighbours]) =>
-    neighbours.map((neighbour) => `    ${key} --> ${neighbour}`),
-  )
-  return "graph\n" + edges.join("\n")
+export const mermaid = (graph, directions = true) => {
+  const edges = _.entries(graph).flatMap(([key, neighbours]) => {
+    return neighbours.map((neighbour) => {
+      if (directions) {
+        return `    ${key} --> ${neighbour}`
+      } else {
+        if (key > neighbour) {
+          return `    ${key} --- ${neighbour}`
+        } else {
+          return `    ${neighbour} --- ${key}`
+        }
+      }
+    })
+  })
+  return "graph\n" + _.uniq(edges).join("\n")
 }
 
 export const createGraphFromPaths = (paths) => {
