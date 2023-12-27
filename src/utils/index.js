@@ -23,6 +23,8 @@
  *     import { myUtil } from '../utils'
  */
 import _ from "lodash"
+import fs from "fs"
+import { exec } from "child_process"
 
 export const getNextPositions = (
   grid,
@@ -37,38 +39,38 @@ export const getNextPositions = (
 
   // Up
   if (row > 0) {
-    nextPositions.push({ row: row - 1, column: column })
+    nextPositions.push({ row: row - 1, column: column, direction: "U" })
   }
   // Down
   if (row < maxRow - 1) {
-    nextPositions.push({ row: row + 1, column: column })
+    nextPositions.push({ row: row + 1, column: column, direction: "D" })
   }
   // Left
   if (column > 0) {
-    nextPositions.push({ row, column: column - 1 })
+    nextPositions.push({ row, column: column - 1, direction: "L" })
   }
   // Right
   if (column < maxCol - 1) {
-    nextPositions.push({ row, column: column + 1 })
+    nextPositions.push({ row, column: column + 1, direction: "R" })
   }
 
   // Diagonals
   if (includeDiagonals) {
     // Upper Left
     if (row > 0 && column > 0) {
-      nextPositions.push({ row: row - 1, column: column - 1 })
+      nextPositions.push({ row: row - 1, column: column - 1, direction: "UL" })
     }
     // Upper Right
     if (row > 0 && column < maxCol - 1) {
-      nextPositions.push({ row: row - 1, column: column + 1 })
+      nextPositions.push({ row: row - 1, column: column + 1, direction: "UR" })
     }
     // Lower Left
     if (row < maxRow - 1 && column > 0) {
-      nextPositions.push({ row: row + 1, column: column - 1 })
+      nextPositions.push({ row: row + 1, column: column - 1, direction: "DL" })
     }
     // Lower Right
     if (row < maxRow - 1 && column < maxCol - 1) {
-      nextPositions.push({ row: row + 1, column: column + 1 })
+      nextPositions.push({ row: row + 1, column: column + 1, direction: "DR" })
     }
   }
 
@@ -147,4 +149,115 @@ export const findCommonDenominator = (numbers) => {
     result = lcm(result, numbers[i])
   }
   return result
+}
+
+export class Graphviz {
+  constructor(graph) {
+    this.graph = graph
+  }
+
+  build() {
+    const edges = this.graph
+      .getEdges()
+      .map(
+        (edge) =>
+          `"${edge.src}" -- "${edge.dest}" [label=${this.graph.getWeight(
+            edge,
+          )}]`,
+      )
+      .map((edge) => "    " + edge)
+      .join("\n")
+
+    return "strict graph G {\n" + edges + "\n}"
+
+    // if (this.type === "digraph") {
+    //   const edges = this.graph.edges
+    //     .map((edge) => `"${edge.src}" -> "${edge.dest}"`)
+    //     .map((edge) => "    " + edge)
+    //     .join("\n")
+    //
+    //   return "digraph G {\n" + edges + "\n}"
+    // }
+  }
+
+  write(name, type) {
+    const graph = this.build()
+    fs.writeFileSync(`/tmp/${name}.dot`, graph)
+    exec(
+      `dot -T ${type} -o /tmp/${name}.${type} /tmp/${name}.dot`,
+      (error, stdout, stderr) => {
+        if (error) {
+          console.log(`error: ${error.message}`)
+        } else if (stderr) {
+          console.log(`stderr: ${stderr}`)
+        } else {
+          console.log(`Graph was written to /tmp/${name}.${type}!`)
+        }
+      },
+    )
+  }
+}
+
+export class Edge {
+  constructor(src, dest, weight = 1) {
+    this.src = src
+    this.dest = dest
+    this.weight = weight
+  }
+
+  toString() {
+    return `${this.src}:${this.dest}`
+  }
+
+  static fromString(string) {
+    const [src, dest] = string.split(":")
+    return new Edge(src, dest)
+  }
+}
+
+export class Graph {
+  constructor() {
+    this.nodes = {}
+    this.weights = {}
+  }
+
+  addNode(node) {
+    this.nodes[node] = new Set()
+  }
+
+  addEdge(edge) {
+    this.nodes[edge.src].add(edge.dest)
+    this.nodes[edge.dest].add(edge.src)
+
+    this.weights[new Edge(edge.src, edge.dest).toString()] = edge.weight
+    this.weights[new Edge(edge.dest, edge.src).toString()] = edge.weight
+  }
+
+  removeEdge(edge) {
+    this.nodes[edge.src].delete(edge.dest)
+    this.nodes[edge.dest].delete(edge.src)
+
+    delete this.weights[new Edge(edge.src, edge.dest).toString()]
+    delete this.weights[new Edge(edge.dest, edge.src).toString()]
+  }
+
+  removeNode(node) {
+    const edges = this.getNodeEdges(node)
+    edges.forEach((edge) => {
+      this.removeEdge(new Edge(edge.dest, edge.src))
+    })
+    delete this.nodes[node]
+  }
+
+  getEdges() {
+    return _.keys(this.nodes).flatMap((node) => this.getNodeEdges(node))
+  }
+
+  getNodeEdges(node) {
+    return Array.from(this.nodes[node]).map((dest) => new Edge(node, dest))
+  }
+
+  getWeight(edge) {
+    return this.weights[edge.toString()]
+  }
 }
