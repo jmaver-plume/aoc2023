@@ -24,7 +24,12 @@
  */
 import _ from "lodash"
 
-export const getNextPositions = (grid, position, includeDiagonals = false) => {
+export const getNextPositions = (
+  grid,
+  position,
+  includeDiagonals = false,
+  predicate = (position, value) => true,
+) => {
   const nextPositions = []
   const { row, column } = position
   const maxRow = grid.length
@@ -67,19 +72,22 @@ export const getNextPositions = (grid, position, includeDiagonals = false) => {
     }
   }
 
-  return nextPositions
+  return nextPositions.filter((p) => predicate(p, grid[p.row][p.column]))
 }
+
+export const uniqPositions = (positions) =>
+  _.uniqBy(positions, ({ row, column }) => `${row}:${column}`)
 
 export const gridIterator = function* (grid) {
   for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[0].length; col++) {
-      yield { row, col, value: grid[row][col] }
+    for (let column = 0; column < grid[0].length; column++) {
+      yield { row, column, value: grid[row][column] }
     }
   }
 }
 
 export const logGrid = (grid) => {
-  console.log(grid.map((row) => row.join("")).join("\n"))
+  console.log(grid.map((row) => row.join("")).join("\n") + "\n")
 }
 
 export const parseGrid = (input) =>
