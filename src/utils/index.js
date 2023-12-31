@@ -261,3 +261,11 @@ export class Graph {
     return this.weights[edge.toString()]
   }
 }
+
+export function heapSort(heap) {
+  const result = []
+  while (!heap.isEmpty()) {
+    result.push(heap.extract())
+  }
+  return result
+}
